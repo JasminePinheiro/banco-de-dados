@@ -77,6 +77,7 @@ WHERE id = NEW.id_comentario;
 END;
 DELIMITER;
 
+DELIMITER $
 CREATE TRIGGER trigger_likes
 AFTER INSERT ON likes_por_projeto
 FOR EACH ROW
@@ -87,7 +88,7 @@ BEGIN
     INSERT INTO projeto_mais_popular (id_projeto) VALUES (NEW.id_projeto);
   END IF;
 END;
-
+DELIMITER 
 
 
 

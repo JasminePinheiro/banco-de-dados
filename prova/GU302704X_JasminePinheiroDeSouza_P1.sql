@@ -226,6 +226,7 @@ INSERT INTO dependents(dependent_id,first_name,last_name,relationship,employee_i
 
 
 /* ------------------------------------------- Exercício 1 - A ------------------------------------------*/
+
 # Fazendo o uso CTE (Common Table Expression)
 WITH department_media_salarial AS (
   SELECT dep.department_name, ROUND(AVG(func.salary), 0) AS media_salarial
@@ -242,7 +243,7 @@ FROM department_media_salarial
 ORDER BY media_salarial ASC;
 
 
-# Média com o resultado certo
+# Média dos departamentos 
 SELECT SUM(avg_salary)/COUNT(*) AS avg_department_salary
 FROM (
   SELECT dep.department_name, AVG(func.salary) AS avg_salary
@@ -253,6 +254,7 @@ FROM (
 
 
 /* ------------------------------------------- Exercício 1 - B ------------------------------------------*/
+
 SELECT func.employee_id, func.first_name, func.last_name, func.salary, average_salary, dep.department_name, ROUND(AVG(func.salary), 2) - ROUND(AVG(d.average_salary), 2) AS diferenca
 FROM employees func
 INNER JOIN departments dep ON func.department_id = dep.department_id
@@ -265,6 +267,7 @@ GROUP BY func.employee_id
 ORDER BY dep.department_name, func.employee_id ASC;
 
 /* ------------------------------------------- Exercício 1 - C ------------------------------------------*/
+
 SELECT 
   dep.department_name AS department, 
   COUNT(CASE WHEN func.salary < (SELECT AVG(salary) FROM employees WHERE department_id = func.department_id) THEN 1 ELSE NULL END) AS salario_abaixo_media,
@@ -331,8 +334,185 @@ SELECT * FROM medico WHERE especialidade = 'clínico geral';
 # Usar o operador de igualdade "=" em vez do operador "like" pode aumentar a eficiência da consulta, pois a consulta com "like" pesquisará por padrão, enquanto a consulta com "=" pesquisará exatamente um valor.
 # obs: não tem nenhuma nenhuma especialidade pediatria, então neste exemplo foi usado clínico geral (usando o banco de dados hospital3).
 
+/* ------------------------------------------- Exercício 4 a,b ------------------------------------------*/
+use usuarios;
+DROP DATABASE usuarios;
+CREATE DATABASE usuarios
+DEFAULT CHARACTER SET UTF8 # reconhece acentuações
+DEFAULT COLLATE UTF8_GENERAL_CI;
+
+CREATE TABLE projetos (
+	id INT NOT NULL AUTO_INCREMENT,
+	titulo VARCHAR (45),
+	data DATE,
+	url VARCHAR (100),
+	PRIMARY KEY (id)
+);
+drop table projetos;
+
+INSERT INTO projetos 
+(titulo, url, data)
+VALUES 
+('Teste1' , 'teste.com.br', '2017-01-20');
+
+CREATE TABLE usuario (
+	id INT NOT NULL AUTO_INCREMENT,
+	nome VARCHAR (45),
+	email VARCHAR (45),
+	senha VARCHAR (45),
+	PRIMARY KEY (id)
+);
+
+INSERT INTO usuario 
+(nome, email, senha)
+VALUES 
+('Jasmine', 'Teste' , '123');
+
+CREATE TABLE comentarios (
+	id INT NOT NULL AUTO_INCREMENT,
+	comentario TEXT,
+	data DATE,
+    id_usuario INT,
+    id_projeto INT,
+	PRIMARY KEY (id),
+	FOREIGN KEY (id_usuario) REFERENCES usuario(id),
+	FOREIGN KEY (id_projeto) REFERENCES projetos(id)
+);
+
+INSERT INTO comentarios 
+(comentario, data)
+VALUES 
+('Comentario Teste' , '2017-01-28'),
+('Comentario Teste2' , '2017-01-28'),
+('Comentario Teste3' , '2017-01-28'),
+('Comentario Teste4' , '2017-01-28');
+
+
+CREATE TABLE likes_por_projeto (
+    id_usuario INT,
+    id_projeto INT,
+	FOREIGN KEY (id_projeto) REFERENCES projetos(id),
+	FOREIGN KEY (id_usuario) REFERENCES usuario(id)
+);
+
+CREATE TABLE likes_por_comentario (
+    id_usuario INT,
+    id_comentario INT,
+	FOREIGN KEY (id_usuario) REFERENCES usuario(id),
+    FOREIGN KEY (id_comentario) REFERENCES comentarios(id)
+);
+
+SELECT * FROM comentarios; 
+SELECT * FROM usuario; 
+SELECT * FROM projetos; 
+
+CREATE TABLE log_comentarios (
+    id INT NOT NULL AUTO_INCREMENT,
+    mensagem VARCHAR(255) NOT NULL,
+    data_hora DATETIME,
+    PRIMARY KEY (id)
+);
+
+# Resposta da questão A
+DELIMITER //
+
+CREATE TRIGGER trigger_comentarios AFTER INSERT ON comentarios FOR EACH ROW
+BEGIN
+    INSERT INTO log_comentarios (mensagem, data_hora)
+    VALUES ('Novo comentário inserido', NOW());
+END //
+
+DELIMITER ;
+
+SELECT * FROM log_comentarios;
+
+# Resposta da questão B
+DELIMITER //
+CREATE TRIGGER trigger_likes_projeto AFTER INSERT ON likes_por_projeto
+FOR EACH ROW
+BEGIN
+    DECLARE total_likes INT;
+    SELECT COUNT(*) INTO total_likes FROM likes_por_projeto WHERE id_projeto = NEW.id_projeto;
+    IF total_likes >= 1000 THEN
+        INSERT INTO lembrete (mensagem) VALUES ('O projeto ' || (SELECT titulo FROM projetos WHERE id = NEW.id_projeto) || ' atingiu 1000 likes!');
+    END IF;
+END //
+
+DELIMITER ;
+
+/* ------------------------------------------- Exercício 5 ------------------------------------------*/
+
+USE comunicado;
+CREATE DATABASE comunicado; 
+CREATE TABLE membros (
+	id INT NOT NULL AUTO_INCREMENT,
+	nome VARCHAR(100) NOT NULL,
+	email VARCHAR(255),
+	dataNascimento DATE,
+	PRIMARY KEY (id)
+);
+
+INSERT INTO membros
+(nome, email, dataNascimento)
+VALUES
+('Ana' , 'ana@gmail.com' , '2023-05-01');
+
+CREATE TABLE lembrete (
+	id INT AUTO_INCREMENT,
+	membroId INT,
+	mensagem VARCHAR(255) NOT NULL,
+	PRIMARY KEY (id , membroId)
+);
+
+DELIMITER //
+
+CREATE TRIGGER lembrar_aniversario AFTER INSERT ON membros FOR EACH ROW
+BEGIN
+  IF NEW.dataNascimento = DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN
+    INSERT INTO lembrete (membroId, mensagem) VALUES (NEW.id, CONCAT('Olá, membros, o aniversário do ', NEW.nome, ' é daqui a 7 dias. Vamos comprar uma lembrança para ele?'));
+  END IF;
+END //
+
+DELIMITER ;
+
+SELECT * FROM lembrete;
+
+/* ------------------------------------------- Exercício 6 ------------------------------------------*/
+USE produtos;
+CREATE DATABASE produtos;
+CREATE TABLE produto (
+	idProduto INT NOT NULL AUTO_INCREMENT, 
+	nome VARCHAR(255) NULL, 
+	preco_normal DECIMAL(10,2) NULL, 
+	preco_desconto DECIMAL(10,2) NULL, 
+	PRIMARY KEY (idProduto)
+); 
+
+INSERT INTO produto
+(nome, preco_normal)
+VALUES
+('mouse', '80.00');
+
+DELIMITER //
+
+CREATE TRIGGER atualizar_preco_desconto 
+BEFORE INSERT ON produto
+FOR EACH ROW 
+BEGIN
+    SET NEW.preco_desconto = NEW.preco_normal * 0.92; # reduz 8% do preço normal
+END //
+
+DELIMITER ;
+
+INSERT INTO produto
+(nome, preco_normal)
+VALUES
+('PC', '1000.00');
+
+SELECT * FROM produto;
 
 /* ------------------------------------------- Exercício 7 ------------------------------------------*/
+USE hr; # usando o banco de dados hr
 SELECT 
   departments.department_name, 
   MIN(employees.salary) AS salario_minimo, 

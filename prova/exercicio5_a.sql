@@ -13,3 +13,8 @@ CREATE TABLE lembrete
 membroId INT,
 mensagem VARCHAR(255) NOT NULL,
 PRIMARY KEY (id , membroId));
+
+
+
+
+
