@@ -335,6 +335,7 @@ SELECT * FROM medico WHERE especialidade = 'clínico geral';
 # obs: não tem nenhuma nenhuma especialidade pediatria, então neste exemplo foi usado clínico geral (usando o banco de dados hospital3).
 
 /* ------------------------------------------- Exercício 4 a,b ------------------------------------------*/
+
 use usuarios;
 DROP DATABASE usuarios;
 CREATE DATABASE usuarios
@@ -478,6 +479,7 @@ DELIMITER ;
 SELECT * FROM lembrete;
 
 /* ------------------------------------------- Exercício 6 ------------------------------------------*/
+
 USE produtos;
 CREATE DATABASE produtos;
 CREATE TABLE produto (
@@ -512,6 +514,7 @@ VALUES
 SELECT * FROM produto;
 
 /* ------------------------------------------- Exercício 7 ------------------------------------------*/
+
 USE hr; # usando o banco de dados hr
 SELECT 
   departments.department_name, 
