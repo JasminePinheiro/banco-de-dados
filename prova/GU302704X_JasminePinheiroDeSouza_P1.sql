@@ -281,37 +281,13 @@ GROUP BY
 
 /* ------------------------------------------- Exercício 1 - D ------------------------------------------*/
 
-# fazendo um aumento salarial com base na media de  de todos os funcionários da empresa.
-UPDATE employees 
-SET salary = salary * 1.1 
-WHERE department_id IN (
-  SELECT department_id FROM departments WHERE department_name IN ('Finance', 'Executive')
-) AND salary < 8600;
-
-UPDATE employees 
-SET salary = salary * 1.1 
-WHERE department_id IN (
-  SELECT department_id FROM departments WHERE department_name IN ('Finance', 'Executive')
-) AND salary < 8600;
-
-SELECT department_name, AVG(salary) as current_avg_salary, 
-ROUND(AVG(salary)*1.1,2) as new_avg_salary
-FROM employees 
-JOIN departments ON employees.department_id = departments.department_id
-WHERE department_name IN ('Finance', 'Executive')
-GROUP BY department_name;
-
-# média geral de todos os funcionarios
+# média geral de todos os departamentos
 SELECT AVG(avg_salary) AS overall_avg_salary
 FROM (
     SELECT AVG(salary) AS avg_salary
     FROM employees
     GROUP BY department_id
 ) AS department_avg;
-
-UPDATE departments 
-SET salary = salary + (SELECT AVG(salary) FROM employees) * 0.1
-WHERE department_id IN (SELECT department_id FROM employees GROUP BY department_id);
 
 # proposta do departamento de finanças
 UPDATE employees
@@ -320,8 +296,12 @@ WHERE department_id = (SELECT department_id FROM departments WHERE department_na
 
 # proposta do departamento de executivos
 UPDATE employees
-SET salary = salary + (6000 * 0.09)
+SET salary = salary + (8060 * 0.09) # 8060 é a média de todos os funcionarios
 WHERE department_id = (SELECT department_id FROM departments WHERE department_name = 'TI');
+
+/* De acordo com o gráfico apresentado, a média que mais faz sentido ser utilizada, é a média proposta pelo departamento de executivos, o aumento com base na média dos salários de todos os funcionários pode ser mais adequado, 
+   já que todos os funcionários receberiam o mesmo aumento percentual. */
+
 
 /* ------------------------------------------- Exercício 3 ------------------------------------------*/
 
