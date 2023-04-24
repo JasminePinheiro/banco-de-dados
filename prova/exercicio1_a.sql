@@ -1,5 +1,7 @@
 create database hr;
+drop database hr; 
 use hr;
+
 CREATE TABLE regions (
 	region_id INT (11) AUTO_INCREMENT PRIMARY KEY,
 	region_name VARCHAR (25) DEFAULT NULL
@@ -260,7 +262,7 @@ INNER JOIN (
   GROUP BY department_id
 ) d ON func.department_id = d.department_id
 GROUP BY func.employee_id
-ORDER BY dep.department_name, func.first_name ASC;
+ORDER BY dep.department_name, func.employee_id ASC;
 
 /* ------------------------------------------- Exercício 1 - C ------------------------------------------*/
 SELECT 
@@ -274,7 +276,73 @@ GROUP BY
   dep.department_name
   ORDER BY dep.department_name ASC;
 
+/* ------------------------------------------- Exercício 1 - D ------------------------------------------*/
+
+# fazendo um aumento salarial com base na media de  de todos os funcionários da empresa.
+UPDATE employees 
+SET salary = salary * 1.1 
+WHERE department_id IN (
+  SELECT department_id FROM departments WHERE department_name IN ('Finance', 'Executive')
+) AND salary < 8600;
+
+UPDATE employees 
+SET salary = salary * 1.1 
+WHERE department_id IN (
+  SELECT department_id FROM departments WHERE department_name IN ('Finance', 'Executive')
+) AND salary < 8600;
+
+SELECT department_name, AVG(salary) as current_avg_salary, 
+ROUND(AVG(salary)*1.1,2) as new_avg_salary
+FROM employees 
+JOIN departments ON employees.department_id = departments.department_id
+WHERE department_name IN ('Finance', 'Executive')
+GROUP BY department_name;
+
+# média geral de todos os funcionarios
+SELECT AVG(avg_salary) AS overall_avg_salary
+FROM (
+    SELECT AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department_id
+) AS department_avg;
+
+UPDATE departments 
+SET salary = salary + (SELECT AVG(salary) FROM employees) * 0.1
+WHERE department_id IN (SELECT department_id FROM employees GROUP BY department_id);
+
+# proposta do departamento de finanças
+UPDATE employees
+SET salary = salary * 1.09
+WHERE department_id = (SELECT department_id FROM departments WHERE department_name = 'TI');
+
+# proposta do departamento de executivos
+UPDATE employees
+SET salary = salary + (6000 * 0.09)
+WHERE department_id = (SELECT department_id FROM departments WHERE department_name = 'TI');
+
+/* ------------------------------------------- Exercício 3 ------------------------------------------*/
+
+select count(*) from medico;
+explain select * from medico where especialidade like 'clínico geral';
+/* Para melhorar o desempenho geral do sistema, e executar a consulta de maneira mais eficiente, a proposta é a criação de um índice na coluna "especialidade"*/
+CREATE INDEX idx_especialidade ON medico (especialidade);
+# após a criação do indice podemos fazer a pesquisa de maneira mais restrita
+SELECT * FROM medico WHERE especialidade = 'clínico geral';
+# Usar o operador de igualdade "=" em vez do operador "like" pode aumentar a eficiência da consulta, pois a consulta com "like" pesquisará por padrão, enquanto a consulta com "=" pesquisará exatamente um valor.
+# obs: não tem nenhuma nenhuma especialidade pediatria, então neste exemplo foi usado clínico geral (usando o banco de dados hospital3).
 
 
+/* ------------------------------------------- Exercício 7 ------------------------------------------*/
+SELECT 
+  departments.department_name, 
+  MIN(employees.salary) AS salario_minimo, 
+  MAX(employees.salary) AS salario_maximo, 
+  ROUND(AVG(employees.salary), 2) AS media_salario 
+FROM 
+  employees 
+  INNER JOIN departments ON employees.department_id = departments.department_id 
+GROUP BY 
+  departments.department_name
+  ORDER BY department_name ASC;
 
 
